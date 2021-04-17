@@ -1,2 +1,1 @@
-# itsec
-IT-SEC Homework
+# IT Security Homework
