@@ -1,4 +1,4 @@
-class Protocolyzer():
+class Protocolyzer:
     def __init__(self, key):
         self.key = key
 
