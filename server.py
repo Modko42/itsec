@@ -19,8 +19,6 @@ def load_users(file):
 NET_PATH = './'
 OWN_ADDR = 'B'
 users = load_users('users.txt')
-print(users[0].id)
-print(users[0].password_hash)
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], shortopts='hp:a:', longopts=['help', 'path=', 'addr='])
