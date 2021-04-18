@@ -31,7 +31,7 @@ class Message:
         return bytearray
     
     def message_from_bytes(self,bytearray):
-
+        #Na itt kell valami magic, fontos, hogy melyik változó hány bites
 
 class Protocolyzer:
     def __init__(self, key):
