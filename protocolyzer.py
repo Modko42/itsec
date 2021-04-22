@@ -20,16 +20,12 @@ class Message:
         self.data = data
         self.padding = padding
  
-    def calculateMAC(self):
-        h = HMAC.new(secret_key,digestmod=SHA256)
-        h.update(bytearray)
-        return h.hexdigest()
-      
+  
     def convert_to_bytes(self):
         bytearray = self.version.to_bytes(4,'big')+self.type.to_bytes(4,'big')+self.len.to_bytes(4,'big')+self.seq.to_bytes(20,'big')+self.timestamp.to_bytes(22,'big')+self.max.to_bytes(4,'big')+self.slice.to_bytes(4,'big')+bytes(self.data)+self.timestamp.to_bytes(10,'big')
         return bytearray
 
-    def bytes_to_message(bytearray):
+    def bytes_to_message(self,bytearray):
         ver = int.from_bytes(bytearray[:4],'big')
         typ = int.from_bytes(bytearray[4:8],'big')
         len = int.from_bytes(bytearray[8:12],'big')
@@ -58,6 +54,6 @@ class Protocolyzer:
 
         cipher = AES.new(self.key,AES.MODE_EAX,ciphernonce)
         data = cipher.decrypt_and_verify(cipher_text,tag)
-        return Message.bytes_to_message(data)
+        return Message.bytes_to_message(self,bytearray = data)
 
 
