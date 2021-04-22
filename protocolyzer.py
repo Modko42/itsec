@@ -61,12 +61,6 @@ class Protocolyzer:
 
         cipher = AES.new(self.key,AES.MODE_EAX,ciphernonce)
         data = cipher.decrypt_and_verify(cipher_text,tag)
-        return data
+        return Message.bytes_to_message(data)
 
 
-proto = Protocolyzer(get_random_bytes(16))
-message = Message(data=bytes("Secret message",'utf-8'))
-secret_inthechannel = proto.protocolyze(message)
-message2 = Message.bytes_to_message(proto.deprotocolyze(secret_inthechannel))
-print(message.data)
-print(message2.data)

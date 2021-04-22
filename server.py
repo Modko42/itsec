@@ -2,6 +2,7 @@ from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 import os, sys, getopt, time
 from netinterface import network_interface
+from protocolyzer import Protocolyzer
 
 class User:
     def __init__(self,id,password_hash):
@@ -19,6 +20,10 @@ def load_users(file):
 NET_PATH = './'
 OWN_ADDR = 'B'
 users = load_users('users.txt')
+#Teszthez
+proto = Protocolyzer(b"\x88'\xbb>\x87\x05\xb2\xb0\xdee\x0c\x00\x99\x92*\xb9")
+#Van
+
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], shortopts='hp:a:', longopts=['help', 'path=', 'addr='])
@@ -58,5 +63,6 @@ while True:
 
 # Calling receive_msg() in blocking mode ...
 	status, msg = netif.receive_msg(blocking=True)      # when returns, status is True and msg contains a message 
-	print(msg.decode('utf-8'))
+	decoded_message = proto.deprotocolyze(msg)
+	print(decoded_message.data)
     
