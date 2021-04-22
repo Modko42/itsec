@@ -24,8 +24,7 @@ class Message:
         h = HMAC.new(secret_key,digestmod=SHA256)
         h.update(bytearray)
         return h.hexdigest()
-        #Mint kiderült ez nem kell, mert a EAX mód alapból használ mac-et, ami a tag-be kerül
- 
+      
     def convert_to_bytes(self):
         bytearray = self.version.to_bytes(4,'big')+self.type.to_bytes(4,'big')+self.len.to_bytes(4,'big')+self.seq.to_bytes(20,'big')+self.timestamp.to_bytes(22,'big')+self.max.to_bytes(4,'big')+self.slice.to_bytes(4,'big')+bytes(self.data)+self.timestamp.to_bytes(10,'big')
         return bytearray
@@ -46,8 +45,6 @@ class Message:
 class Protocolyzer:
     def __init__(self, key):
         self.key = key
-
-    #Itt az a baj, hogy a protocolyzer nem egy konkrét stringet vagy bitsorozatot ad vissza hanem ott van az a tag(MAC) is, ezt még vhogy össze kell csomagolni
 
     def protocolyze(self,message):
         cipher = AES.new(self.key,AES.MODE_EAX)
