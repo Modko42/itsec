@@ -9,10 +9,10 @@ private_key = get_random_bytes(32)
 #TODO
 
 class Message:
-    def __init(self,version=1,type=1,len=4,seq=1,timestamp=1,max=1,slice=0,padding=0,data):
+    def __init__(self,data,version=2,type=1,seq=1,timestamp=11,max=4,slice=1,padding=10):
         self.version = version
         self.type = type
-        self.len = len
+        self.len = len(data)
         self.seq = seq
         self.timestamp = timestamp
         self.max = max
@@ -27,23 +27,46 @@ class Message:
         #Mint kiderült ez nem kell, mert a EAX mód alapból használ mac-et, ami a tag-be kerül
  
     def convert_to_bytes(self):
-        bytearray =  bytes(version,'utf-8')+bytes(type,'utf-8')+bytes(len,'utf-8')+bytes(seq,'utf-8')+bytes(timestamp,'utf-8')+bytes(max,'utf-8')+bytes(slice,'utf-8')+bytes(data,'utf-8')+bytes(padding,'utf-8')
+        bytearray = self.version.to_bytes(4,'big')+self.type.to_bytes(4,'big')+self.len.to_bytes(4,'big')+self.seq.to_bytes(20,'big')+self.timestamp.to_bytes(22,'big')+self.max.to_bytes(4,'big')+self.slice.to_bytes(4,'big')+bytes(self.data)+self.timestamp.to_bytes(10,'big')
         return bytearray
-    
-    def message_from_bytes(self,bytearray):
-        #Na itt kell valami magic, fontos, hogy melyik változó hány bites
+
+    def bytes_to_message(bytearray):
+        ver = int.from_bytes(bytearray[:4],'big')
+        typ = int.from_bytes(bytearray[4:8],'big')
+        len = int.from_bytes(bytearray[8:12],'big')
+        seq = int.from_bytes(bytearray[12:32],'big')
+        timestamp = int.from_bytes(bytearray[32:54],'big')
+        max = int.from_bytes(bytearray[54:58],'big')
+        slice = int.from_bytes(bytearray[58:62],'big')
+        data = bytearray[62:62+len]
+        padding = int.from_bytes(bytearray[62+len:],'big')
+
+        return Message(data,ver,typ,seq,timestamp,max,slice,padding)
 
 class Protocolyzer:
     def __init__(self, key):
         self.key = key
 
+    #Itt az a baj, hogy a protocolyzer nem egy konkrét stringet vagy bitsorozatot ad vissza hanem ott van az a tag(MAC) is, ezt még vhogy össze kell csomagolni
+
     def protocolyze(self,message):
         cipher = AES.new(self.key,AES.MODE_EAX)
         cipher_text, tag = cipher.encrypt_and_digest(message.convert_to_bytes())
-        return cipher.nonce,tag,cipher_text
+        return cipher.nonce+tag+cipher_text
 
-    def deprotocolyze(self,nonce,tag,cipher_text)
-        cipher = AES.new(key,AES.MODE_EAX,nonce)
+    def deprotocolyze(self,string_array):
+        ciphernonce = string_array[:16]
+        tag = string_array[16:32]
+        cipher_text = string_array[32:]
+
+        cipher = AES.new(self.key,AES.MODE_EAX,ciphernonce)
         data = cipher.decrypt_and_verify(cipher_text,tag)
-        return message_from_bytes(data)
+        return data
 
+
+proto = Protocolyzer(get_random_bytes(16))
+message = Message(data=bytes("Secret message",'utf-8'))
+secret_inthechannel = proto.protocolyze(message)
+message2 = Message.bytes_to_message(proto.deprotocolyze(secret_inthechannel))
+print(message.data)
+print(message2.data)
