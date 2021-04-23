@@ -57,6 +57,7 @@ def login():
 def test():
     print("What the message?")
     message = Message(data=bytes(input(),'utf-8'))
+    print("Sent: "+str(proto.protocolyze(message)))
     netint.send_msg('B',proto.protocolyze(message))
 
 test()

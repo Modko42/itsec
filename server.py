@@ -63,6 +63,7 @@ while True:
 
 # Calling receive_msg() in blocking mode ...
 	status, msg = netif.receive_msg(blocking=True)      # when returns, status is True and msg contains a message 
+	print("Received message: "+str(msg))
 	decoded_message = proto.deprotocolyze(msg)
 	print(decoded_message.data)
     

@@ -1,6 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Random import get_random_bytes
+from bitarray import bitarray
 
 #TODO
 secret_key = get_random_bytes(16) 
@@ -9,7 +10,7 @@ private_key = get_random_bytes(32)
 #TODO
 
 class Message:
-    def __init__(self,data,version=2,type=1,seq=1,timestamp=11,max=4,slice=1,padding=10):
+    def __init__(self,data,version=2,type=1,seq=1,timestamp=11,max=4,slice=1):
         self.version = version
         self.type = type
         self.len = len(data)
@@ -18,11 +19,13 @@ class Message:
         self.max = max
         self.slice = slice
         self.data = data
-        self.padding = padding
+        self.padding = bitarray((1400 - self.len) * 8)
+        self.padding.setall(0)
+        self.padding[0] = 1
  
   
     def convert_to_bytes(self):
-        bytearray = self.version.to_bytes(4,'big')+self.type.to_bytes(4,'big')+self.len.to_bytes(4,'big')+self.seq.to_bytes(20,'big')+self.timestamp.to_bytes(22,'big')+self.max.to_bytes(4,'big')+self.slice.to_bytes(4,'big')+bytes(self.data)+self.timestamp.to_bytes(10,'big')
+        bytearray = self.version.to_bytes(4,'big')+self.type.to_bytes(4,'big')+self.len.to_bytes(4,'big')+self.seq.to_bytes(20,'big')+self.timestamp.to_bytes(22,'big')+self.max.to_bytes(4,'big')+self.slice.to_bytes(4,'big')+bytes(self.data)+self.padding.tobytes()
         return bytearray
 
     def bytes_to_message(self,bytearray):
@@ -34,9 +37,8 @@ class Message:
         max = int.from_bytes(bytearray[54:58],'big')
         slice = int.from_bytes(bytearray[58:62],'big')
         data = bytearray[62:62+len]
-        padding = int.from_bytes(bytearray[62+len:],'big')
 
-        return Message(data,ver,typ,seq,timestamp,max,slice,padding)
+        return Message(data,ver,typ,seq,timestamp,max,slice)
 
 class Protocolyzer:
     def __init__(self, key):
