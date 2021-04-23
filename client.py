@@ -7,24 +7,11 @@ from protocolyzer import Protocolyzer
 from protocolyzer import Message
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES, PKCS1_OAEP
-
+from getpass import getpass
 
 NET_PATH = './'
 OWN_ADDR = 'A'
 netint = network_interface(NET_PATH, OWN_ADDR)
-public_key = RSA.generate(2048)
-rsa_key = RSA.generate(2048)
-
-key = RSA.generate(2048)
-private_key = key.export_key()
-file_out = open("private.pem", "wb")
-file_out.write(private_key)
-file_out.close()
-
-public_key = key.publickey().export_key()
-file_out = open("public.pem", "wb")
-file_out.write(public_key)
-file_out.close()
 
 #Csak teszteléshez van
 proto = Protocolyzer(b"\x88'\xbb>\x87\x05\xb2\xb0\xdee\x0c\x00\x99\x92*\xb9")
@@ -42,14 +29,17 @@ def init_connection():
     enc_session_key = cipher_rsa.encrypt(session_key)
     
 
-def get_password():
-    print("Please provide your password:")
-    password = input()
-    return password
+def get_login_data():
+    print("Login process")
+    print("Id: ",end='')
+    id = input()
+    print("Password: ",end='')
+    passwd = getpass() #Hides characters during input
+    return id,passwd
 
 def login():
-    print("Starting login process...")
-    passwd = get_password()
+    id,passwd = get_login_data()
+
     netint.send_msg('B', proto.protocolyze(passwd))
     salt = get_random_bytes(16)
     file_key = PBKDF2(passwd, salt, 32, count=1000000, hmac_hash_module=SHA512)
@@ -60,4 +50,5 @@ def test():
     print("Sent: "+str(proto.protocolyze(message)))
     netint.send_msg('B',proto.protocolyze(message))
 
-test()
+
+login()
