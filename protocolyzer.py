@@ -2,6 +2,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Random import get_random_bytes
 from bitarray import bitarray
+import time
 
 #TODO
 secret_key = get_random_bytes(16) 
@@ -10,12 +11,13 @@ private_key = get_random_bytes(32)
 #TODO
 
 class Message:
-    def __init__(self,data,version=2,type=1,seq=1,timestamp=11,max=4,slice=1):
+    def __init__(self,data,version=1,type=1,seq=1,timestamp=0,max=1,slice=1):
         self.version = version
         self.type = type
         self.len = len(data)
         self.seq = seq
-        self.timestamp = timestamp
+        if timestamp == 0:
+            self.timestamp = time.time()
         self.max = max
         self.slice = slice
         self.data = data

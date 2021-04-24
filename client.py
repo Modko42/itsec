@@ -8,10 +8,12 @@ from protocolyzer import Message
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES, PKCS1_OAEP
 from getpass import getpass
+import time
 
 NET_PATH = './'
 OWN_ADDR = 'A'
 netint = network_interface(NET_PATH, OWN_ADDR)
+session_key = 0
 
 #Csak teszteléshez van
 proto = Protocolyzer(b"\x88'\xbb>\x87\x05\xb2\xb0\xdee\x0c\x00\x99\x92*\xb9")
@@ -27,7 +29,9 @@ def init_connection():
     # Encrypt the session key with the public RSA key
     cipher_rsa = PKCS1_OAEP.new(recipient_key)
     enc_session_key = cipher_rsa.encrypt(session_key)
-    
+    netint.send_msg('B',enc_session_key)
+
+
 
 def get_login_data():
     print("Login process")
@@ -39,10 +43,14 @@ def get_login_data():
 
 def login():
     id,passwd = get_login_data()
-
-    netint.send_msg('B', proto.protocolyze(passwd))
-    salt = get_random_bytes(16)
-    file_key = PBKDF2(passwd, salt, 32, count=1000000, hmac_hash_module=SHA512)
+    message_id = Message(data=bytes(id,'utf-8'),type=3)
+    netint.send_msg('B', proto.protocolyze(message_id))
+    
+    
+    
+    
+    #salt = get_random_bytes(16)
+    #file_key = PBKDF2(passwd, salt, 32, count=1000000, hmac_hash_module=SHA512)
 
 def test():
     print("What the message?")
