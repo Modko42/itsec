@@ -13,34 +13,38 @@ import time
 NET_PATH = './'
 OWN_ADDR = 'A'
 netint = network_interface(NET_PATH, OWN_ADDR)
-session_key = 0
+
 state = 0
 
-# Csak teszteléshez van
-proto = Protocolyzer(b"\x88'\xbb>\x87\x05\xb2\xb0\xdee\x0c\x00\x99\x92*\xb9")
+def current_time():
+	return str(time.strftime("%H:%M:%S", time.localtime()))+str(" : ")
 
 
-# Ez
+
 
 def init_connection():
-    # all the steps required to set up the secure channel between the client and server
-    # generate custom key
-    # encrypt the public key with it
     recipient_key = RSA.import_key(open("public.pem").read())
+    global session_key
     session_key = get_random_bytes(16)
+    print(current_time()+"Session key: "+str(session_key))
+    global proto
+    proto = Protocolyzer(session_key)
 
-    # Encrypt the session key with the public RSA key
     cipher_rsa = PKCS1_OAEP.new(recipient_key)
     enc_session_key = cipher_rsa.encrypt(session_key)
     netint.send_msg('B', enc_session_key)
-    return True
+    status, result = wait_for_msg()
+    if status:
+        if proto.deprotocolyze(result).type == 2:
+            return True
+    return False
+    
 
 
 def get_login_data():
     print("Login process")
     print("Id: ", end='')
     id = input()
-    print("Password: ", end='')
     passwd = getpass()  # Hides characters during input
     return id, passwd
 
@@ -48,27 +52,28 @@ def get_login_data():
 def login():
     id, passwd = get_login_data()
     message_id = Message(data=bytes(id, 'utf-8'), type=3)
+    message_pw = Message(data=bytes(passwd, 'utf-8'), type=4)
     netint.send_msg('B', proto.protocolyze(message_id))
+    status,msg = wait_for_msg()
+    if status:
+        if proto.deprotocolyze(msg).type == 5:
+            netint.send_msg('B', proto.protocolyze(message_pw))
+
+
+
+
 
     # salt = get_random_bytes(16)
     # file_key = PBKDF2(passwd, salt, 32, count=1000000, hmac_hash_module=SHA512)
     return True
 
-
-def test():
-    print("What the message?")
-    message = Message(data=bytes(input(), 'utf-8'))
-    print("Sent: " + str(proto.protocolyze(message)))
-    netint.send_msg('B', proto.protocolyze(message))
-
-
 def wait_for_msg():
     status = False
     i = 0
-    while not status and i < 5:
+    while not status and i < 15:
         status, msg = netint.receive_msg(blocking=False)
         i += 1
-        time.sleep(0.5)
+        time.sleep(0.3)
     return status, msg
 
 
@@ -97,7 +102,7 @@ def download(filename):
 
 
 def command():
-    print("Type your command")
+    print(current_time()+"Type your command")
     cmd = input()
     split = cmd.split()
     if split[0] == "upload":
@@ -125,7 +130,7 @@ def command():
         netint.send_msg('B', proto.protocolyze(message_command))
         status, result = wait_for_msg()
         if status:
-            print(proto.deprotocolyze(result))
+            print(proto.deprotocolyze(result).data)
         else:
             print("Timeout error")
 
@@ -133,11 +138,15 @@ def command():
 while True:
     if state == 0:
         if init_connection():
-            print("Connected successfully!")
+            print(current_time()+"Connected successfully!")
             state = 1
+        else:
+            print(current_time()+"Connection failed!")
     elif state == 1:
         if login():
-            print("Successful login")
+            print(current_time()+"Successful login!")
             state = 2
+        else:
+            print(current_time()+"Login failed, wrong id or password!")
     elif state == 2:
         command()

@@ -17,7 +17,7 @@ class Message:
         self.len = len(data)
         self.seq = seq
         if timestamp == 0:
-            self.timestamp = time.time()
+            self.timestamp = int(time.time())
         self.max = max
         self.slice = slice
         self.data = data
