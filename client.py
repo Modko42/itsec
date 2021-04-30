@@ -58,13 +58,6 @@ def login():
     if status:
         if proto.deprotocolyze(msg).type == 5:
             netint.send_msg('B', proto.protocolyze(message_pw))
-
-
-
-
-
-    # salt = get_random_bytes(16)
-    # file_key = PBKDF2(passwd, salt, 32, count=1000000, hmac_hash_module=SHA512)
     return True
 
 def wait_for_msg():

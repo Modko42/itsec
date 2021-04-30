@@ -4,11 +4,6 @@ from Crypto.Random import get_random_bytes
 from bitarray import bitarray
 import time
 
-#TODO
-secret_key = get_random_bytes(16) 
-public_key = get_random_bytes(16)
-private_key = get_random_bytes(32) 
-#TODO
 
 class Message:
     def __init__(self,data = bytes("ok", 'utf-8'),version=1,type=1,seq=1,timestamp=0,max=1,slice=1):
@@ -21,7 +16,7 @@ class Message:
         self.max = max
         self.slice = slice
         self.data = data
-        self.padding = bitarray((1400 - self.len) * 8)
+        self.padding = bitarray((3000 - self.len) * 8)
         self.padding.setall(0)
         self.padding[0] = 1
  

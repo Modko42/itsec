@@ -39,8 +39,6 @@ state = "no_connection"
 private_key = RSA.import_key(open("private.pem").read())
 global active_user
 
-# when the user logs in, the current dir can be updated with the username
-# should always be kept up to date
 current_path = "./"
 
 
@@ -202,7 +200,6 @@ while True:
                         result_msg = Message(data=bytes("Directory deleted", 'utf-8'), type=7)
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         print(current_time() + "Directory deleted, confirmation sent to 'A' client.")
-                # have to pay attention to cd .. functionality
                 elif split[0] == "cwd":
                     if split[1] == "..":
                         split_dir = current_path.split("/")
@@ -235,17 +232,14 @@ while True:
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         print(current_time() + "File doesn't exist, error message sent to 'A' client.")
                     else:
-                        # should check for exceptions maybe
                         upload(current_path + "/" + split[1])
                         print(current_time() + "File sent to 'A' client.")
                 elif split[0] == "upload":
-                    # send ACK
                     if split[1] in get_ls(current_path):
                         result_msg = Message(data=bytes("Error, the file already exists", 'utf-8'), type=7)
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         print(current_time() + "File already exists, error message sent to 'A' client.")
                     else:
-                        # should check for exceptions maybe
                         result_msg = Message(data=bytes("ok",'utf-8'),type=5)
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         download(split[1])
