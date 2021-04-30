@@ -130,7 +130,7 @@ def command():
         netint.send_msg('B', proto.protocolyze(message_command))
         status, result = wait_for_msg()
         if status:
-            print((proto.deprotocolyze(result).data).decode("utf-8"))
+            print(proto.deprotocolyze(result).data.decode("utf-8"))
         else:
             print(current_time()+"Timeout error")
 
