@@ -92,10 +92,10 @@ def find_user(id, password):
 def wait_for_msg():
     status = False
     i = 0
-    while not status and i < 5:
+    while not status and i < 10:
         status, msg = netint.receive_msg(blocking=False)
         i += 1
-        time.sleep(0.5)
+        time.sleep(0.2)
     return status, msg
 
 
@@ -106,16 +106,21 @@ def current_time():
 def upload(filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
-    message_data = Message(data=bytes(lines), type=7)
-    netint.send_msg('B', proto.protocolyze(message_data))
+    lines_str = ""
+    for l in lines:
+        lines_str += l
+    message_data = Message(data=bytes(lines_str,'utf-8'), type=7)
+    print(message_data.type)
+    netint.send_msg('A', proto.protocolyze(message_data))
 
 
 def download(filename):
-    status, result = proto.deprotocolyze(wait_for_msg())
+    status, result = wait_for_msg()
+    msg = proto.deprotocolyze(result)
     if not status:
         return False
     with open(current_path + "/" + filename, 'w+') as f:
-        for line in list(result.data):
+        for line in list(msg.data.decode('utf-8')):
             f.write(line)
     f.close()
     return True
@@ -157,7 +162,7 @@ while True:
                         active_user = str(received_id)
                         print(current_time() + "User " + active_user + " logged in.")
                         # update the current dir to match the user
-                        current_path += active_user + "/"
+                        current_path += active_user+"/"
                     else:
                         print(current_time() + "Wrong id or password.")
 
@@ -165,10 +170,12 @@ while True:
         status, msg = wait_for_msg()
         if status:
             decoded_msg = proto.deprotocolyze(msg)
-            split = decoded_msg.data.split()
+            split = decoded_msg.data.decode('utf-8').split()
             if decoded_msg.type == 6:
                 if split[0] == "ls":
+                    print(current_path)
                     result_msg = Message(data=bytes(get_ls(current_path), 'utf-8'), type=7)
+                    print(get_ls(current_path))
                     netint.send_msg('A', proto.protocolyze(result_msg))
                     print(current_time() + "List of directories and files sent to 'A' client.")
                 elif split[0] == "gwd":
@@ -208,7 +215,7 @@ while True:
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         print(current_time() + "Directory doesn't exist, error message sent to 'A' client.")
                     else:
-                        current_path += ("/" + split[1])
+                        current_path += (split[1] + "/")
                         result_msg = Message(data=bytes("Current directory changed", 'utf-8'), type=7)
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         print(current_time() + "Directory changed, confirmation sent to 'A' client.")
@@ -239,9 +246,10 @@ while True:
                         print(current_time() + "File already exists, error message sent to 'A' client.")
                     else:
                         # should check for exceptions maybe
-                        result_msg = Message(type=5)
+                        result_msg = Message(data=bytes("ok",'utf-8'),type=5)
                         netint.send_msg('A', proto.protocolyze(result_msg))
                         download(split[1])
                         print(current_time() + "File received from 'A' client.")
+                        netint.send_msg('A', proto.protocolyze(result_msg))
             else:
                 print(current_time() + "Unexpected message received.")

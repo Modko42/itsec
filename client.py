@@ -73,29 +73,34 @@ def wait_for_msg():
     while not status and i < 15:
         status, msg = netint.receive_msg(blocking=False)
         i += 1
-        time.sleep(0.3)
+        time.sleep(0.2)
     return status, msg
 
 
 def upload(filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
-    message_data = Message(data=bytes(lines), type=7)
+    lines_str = ""
+    for l in lines:
+        lines_str += l
+    message_data = Message(data=bytes(lines_str,'utf-8'), type=7)
     netint.send_msg('B', proto.protocolyze(message_data))
-    status, result = proto.deprotocolyze(wait_for_msg())
+    status, result = wait_for_msg()
     if status:
-        if result.type == 5:
+        msg = proto.deprotocolyze(result)
+        if msg.type == 5:
             return True
         else:
             return False
 
 
 def download(filename):
-    status, result = proto.deprotocolyze(wait_for_msg())
+    status, result = wait_for_msg()
     if not status:
         return False
+    msg = proto.deprotocolyze(result)
     with open(filename, 'w+') as f:
-        for line in list(result.data):
+        for line in list(msg.data.decode('utf-8')):
             f.write(line)
     f.close()
     return True
@@ -108,7 +113,8 @@ def command():
     if split[0] == "upload":
         message_command = Message(data=bytes(cmd, 'utf-8'), type=6)
         netint.send_msg('B', proto.protocolyze(message_command))
-
+        status,msg = wait_for_msg()
+        result = proto.deprotocolyze(msg)
         if status:
             if result.type != 5:
                 print(current_time()+"Error, no answer")
