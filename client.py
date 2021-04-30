@@ -111,28 +111,28 @@ def command():
 
         if status:
             if result.type != 5:
-                print("Error, no answer")
+                print(current_time()+"Error, no answer")
             else:
                 if upload(split[1]):
-                    print("Upload successful")
+                    print(current_time()+"Upload successful")
                 else:
-                    print("Upload failed")
+                    print(current_time()+"Upload failed")
 
     elif split[0] == "download":
         message_command = Message(data=bytes(cmd, 'utf-8'), type=6)
         netint.send_msg('B', proto.protocolyze(message_command))
         if download(split[1]):
-            print("Download successful")
+            print(current_time()+"Download successful")
         else:
-            print("Download failed")
+            print(current_time()+"Download failed")
     else:
         message_command = Message(data=bytes(cmd, 'utf-8'), type=6)
         netint.send_msg('B', proto.protocolyze(message_command))
         status, result = wait_for_msg()
         if status:
-            print(proto.deprotocolyze(result).data)
+            print((proto.deprotocolyze(result).data).decode("utf-8"))
         else:
-            print("Timeout error")
+            print(current_time()+"Timeout error")
 
 
 while True:

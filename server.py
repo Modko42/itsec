@@ -1,19 +1,20 @@
-from Crypto.Hash import SHA256
-from Crypto.Random import get_random_bytes
-import os, sys, getopt, time
-from netinterface import network_interface
-from protocolyzer import Protocolyzer
-import Crypto
-from netinterface import network_interface
-from Crypto.Protocol.KDF import PBKDF2
-from Crypto.Random import get_random_bytes
-from Crypto.Hash import SHA512
-from protocolyzer import Protocolyzer
-from protocolyzer import Message
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES, PKCS1_OAEP
-from getpass import getpass
+import getopt
+import os
+import sys
 import time
+from getpass import getpass
+from os import walk
+
+import Crypto
+from Crypto.Cipher import AES, PKCS1_OAEP
+from Crypto.Hash import SHA256, SHA512
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.PublicKey import RSA
+from Crypto.Random import get_random_bytes
+
+from netinterface import network_interface
+from protocolyzer import Message, Protocolyzer
+
 
 class User:
     def __init__(self,id,password_hash):
@@ -33,6 +34,16 @@ OWN_ADDR = 'B'
 users = load_users('users.txt')
 state = "no_connection"
 private_key = RSA.import_key(open("private.pem").read())
+global active_user
+
+def get_ls(directory):
+	list = ""
+	for (dirpath, dirnames, filenames) in walk(directory):
+		for l in (dirnames+filenames):
+			list+=(str(l)+"\n")
+	if len(list)>0:
+		list = list[:-1]
+	return list
 
 
 
@@ -81,9 +92,10 @@ def wait_for_msg():
 def current_time():
 	return str(time.strftime("%H:%M:%S", time.localtime()))+str(" : ")
 
+
 # main loop
 netint = network_interface(NET_PATH, OWN_ADDR)
-print('Main loop started...')
+print(current_time()+'Server started.')
 while True:
 	if state == "no_connection":
 		status,msg = wait_for_msg()
@@ -99,7 +111,7 @@ while True:
 			netint.send_msg('A', proto.protocolyze(respone_msg))
 			print(current_time()+"Auth response sent to 'A' client")
 			state = "valid_sessionkey"
-	if state == "valid_sessionkey":
+	elif state == "valid_sessionkey":
 		status,msg = wait_for_msg()
 		if status:
 			decoded_msg = proto.deprotocolyze(msg)
@@ -113,10 +125,22 @@ while True:
 					received_pw = proto.deprotocolyze(msg).data
 					print(current_time()+"Received password: "+str(received_pw))
 					if find_user(received_id, received_pw):
-							print(current_time()+"User "+received_id+" logged in.")
+						state = "user_logged_in"
+						active_user = str(received_id)
+						print(current_time()+"User "+active_user+" logged in.")
 					else:
 						print(current_time()+"Wrong id or password.")
-						
+	
+	elif state == "user_logged_in":
+		status,msg = wait_for_msg()
+		if status:
+			decoded_msg = proto.deprotocolyze(msg)
+			if decoded_msg.type == 6:
+					result_msg = Message(data=bytes(get_ls('./'+active_user),'utf-8'),type=7) 
+					netint.send_msg('A', proto.protocolyze(result_msg))
+					print(current_time()+"List of directories and files sent to 'A' client.")
+			else:
+				print(current_time()+"Unexpected message received.")
 							
 
 
