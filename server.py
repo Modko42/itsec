@@ -41,7 +41,7 @@ global active_user
 
 # when the user logs in, the current dir can be updated with the username
 # should always be kept up to date
-current_path = "/"
+current_path = "./"
 
 
 def get_ls(directory):
@@ -157,7 +157,7 @@ while True:
                         active_user = str(received_id)
                         print(current_time() + "User " + active_user + " logged in.")
                         # update the current dir to match the user
-                        current_path += active_user
+                        current_path += active_user + "/"
                     else:
                         print(current_time() + "Wrong id or password.")
 
@@ -199,11 +199,10 @@ while True:
                 elif split[0] == "cwd":
                     if split[1] == "..":
                         split_dir = current_path.split("/")
-                        current_path = "/" + active_user
+                        current_path = "./" + active_user + "/"
                         for directory in split_dir[:-1]:
                             current_path += directory
                             current_path += "/"
-                        current_path = split
                     elif split[1] not in get_ls(current_path):
                         result_msg = Message(data=bytes("Error, the directory doesn't exist", 'utf-8'), type=7)
                         netint.send_msg('A', proto.protocolyze(result_msg))
@@ -240,9 +239,9 @@ while True:
                         print(current_time() + "File already exists, error message sent to 'A' client.")
                     else:
                         # should check for exceptions maybe
-                        download(split[1])
                         result_msg = Message(type=5)
                         netint.send_msg('A', proto.protocolyze(result_msg))
+                        download(split[1])
                         print(current_time() + "File received from 'A' client.")
             else:
                 print(current_time() + "Unexpected message received.")

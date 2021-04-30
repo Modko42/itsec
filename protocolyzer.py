@@ -11,7 +11,7 @@ private_key = get_random_bytes(32)
 #TODO
 
 class Message:
-    def __init__(self,data,version=1,type=1,seq=1,timestamp=0,max=1,slice=1):
+    def __init__(self,data = bytes("ok", 'utf-8'),version=1,type=1,seq=1,timestamp=0,max=1,slice=1):
         self.version = version
         self.type = type
         self.len = len(data)
