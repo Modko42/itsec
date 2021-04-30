@@ -102,7 +102,7 @@ def download(filename):
 
 
 def command():
-    print(current_time()+"Type your command")
+    print("Type your command: ",end='')
     cmd = input()
     split = cmd.split()
     if split[0] == "upload":
