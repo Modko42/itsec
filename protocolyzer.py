@@ -16,7 +16,7 @@ class Message:
         self.max = max
         self.slice = slice
         self.data = data
-        self.padding = bitarray((3000 - self.len) * 8)
+        self.padding = bitarray((5000 - self.len) * 8)
         self.padding.setall(0)
         self.padding[0] = 1
  
