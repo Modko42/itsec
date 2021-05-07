@@ -169,7 +169,6 @@ def command():
 while True:
     if state == 0:
         waittime=time.time()-timeouttimestamp
-        print(waittime)
         if(waittime >= 60):
             if init_connection():
                 print(current_time()+"Connected successfully!")
@@ -177,7 +176,7 @@ while True:
             else:
                 print(current_time()+"Connection failed!")
         else:
-            print(str(60-waittime) +"seconds till you can attempt to login")
+            print(str(round(60-waittime)) +"seconds till you can attempt to login")
             time.sleep(10)
     elif state == 1:
         if login():

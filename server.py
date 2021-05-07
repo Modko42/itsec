@@ -258,7 +258,6 @@ while True:
             else:
                 print(current_time() + "Unexpected message received.")
         else:
-            print(str(time.time()-timeouttimestamp))
             if(time.time()-timeouttimestamp >= 60):
                 state = "no_connection"
 
