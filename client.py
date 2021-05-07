@@ -102,7 +102,7 @@ def download(filename):
         state=0
         return False
     msg = proto.deprotocolyze(result)
-    if(result.type == 8):
+    if(msg.type == 8):
         print(current_time()+"Timeout error")
         timeouttimestamp=time.time()
         state=0
