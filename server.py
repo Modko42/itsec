@@ -165,6 +165,7 @@ while True:
                     print(current_time() + "Received password: " + str(received_pw))
                     if find_user(received_id, received_pw):
                         state = "user_logged_in"
+                        timeouttimestamp = time.time()
                         active_user = str(received_id)
                         print(current_time() + "User " + active_user + " logged in.")
                         # update the current dir to match the user

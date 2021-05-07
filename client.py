@@ -73,6 +73,7 @@ def wait_for_msg():
 
 def upload(filename):
     global state
+    global timeouttimestamp
     with open(filename, 'r') as f:
         lines = f.readlines()
     lines_str = ""
@@ -93,6 +94,7 @@ def upload(filename):
 
 def download(filename):
     global state
+    global timeouttimestamp
     status, result = wait_for_msg()
     if not status:
         print(current_time()+"Timeout error")
@@ -114,6 +116,7 @@ def download(filename):
 
 def command():
     global state
+    global timeouttimestamp
     print("Type your command: ",end='')
     cmd = input()
     split = cmd.split()
@@ -155,23 +158,17 @@ def command():
         if status:
             if(msg.type == 8):
                 print(current_time()+"Timeout error")
-                print("ott")
-                timeouttimestamp=time.time()
-                print("state")
                 state=0
-                print("thing")
                 return
             print(msg.data.decode("utf-8"))
         else:
             print(current_time()+"Timeout error")
-            print("itt")
             timeouttimestamp=time.time()
             state=0
 
 while True:
-    print(state)
     if state == 0:
-        waittime=round(time.time()-timeouttimestamp)
+        waittime=time.time()-timeouttimestamp
         print(waittime)
         if(waittime >= 60):
             if init_connection():
@@ -180,7 +177,8 @@ while True:
             else:
                 print(current_time()+"Connection failed!")
         else:
-            print(str(waittime) +"seconds till you can attempt to login")
+            print(str(60-waittime) +"seconds till you can attempt to login")
+            time.sleep(10)
     elif state == 1:
         if login():
             print(current_time()+"Successful login!")
@@ -192,4 +190,5 @@ while True:
             command()
         except:
             print("Error while communicating with the server, disconnecting")
+            timeouttimestamp=time.time()
             state = 0
