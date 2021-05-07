@@ -38,6 +38,8 @@ users = load_users('users.txt')
 state = "no_connection"
 private_key = RSA.import_key(open("private.pem").read())
 global active_user
+global proto
+timeouttimestamp = time.time()
 
 current_path = "./"
 
@@ -123,25 +125,31 @@ def download(filename):
     f.close()
     return True
 
-
 # main loop
 netint = network_interface(NET_PATH, OWN_ADDR)
 print(current_time() + 'Server started.')
 while True:
     if state == "no_connection":
+        valid_msg=True
         status, msg = wait_for_msg()
         if status:
             print(current_time() + "RSA coded msg received")
             cipher_rsa = PKCS1_OAEP.new(private_key)
             global session_key
-            session_key = cipher_rsa.decrypt(msg)
-            print(current_time() + "Session key: " + str(session_key))
-            global proto
-            proto = Protocolyzer(session_key)
-            respone_msg = Message(data=bytes("ok", 'utf-8'), type=2)
-            netint.send_msg('A', proto.protocolyze(respone_msg))
-            print(current_time() + "Auth response sent to 'A' client")
-            state = "valid_sessionkey"
+            try:
+                session_key = cipher_rsa.decrypt(msg)
+            except:
+                valid_msg=False
+                timeout_msg=Message(data=bytes("Connection timed out", 'utf-8'), type=8)
+                netint.send_msg('A', proto.protocolyze(timeout_msg))
+                print(current_time() + "Timeout notification sent to 'A' client")
+            if(valid_msg):
+                print(current_time() + "Session key: " + str(session_key))
+                proto = Protocolyzer(session_key)
+                respone_msg = Message(data=bytes("ok", 'utf-8'), type=2)
+                netint.send_msg('A', proto.protocolyze(respone_msg))
+                print(current_time() + "Auth response sent to 'A' client")
+                state = "valid_sessionkey"
     elif state == "valid_sessionkey":
         status, msg = wait_for_msg()
         if status:
@@ -167,6 +175,7 @@ while True:
     elif state == "user_logged_in":
         status, msg = wait_for_msg()
         if status:
+            timeouttimestamp=time.time()
             decoded_msg = proto.deprotocolyze(msg)
             split = decoded_msg.data.decode('utf-8').split()
             if decoded_msg.type == 6:
@@ -247,3 +256,9 @@ while True:
                         netint.send_msg('A', proto.protocolyze(result_msg))
             else:
                 print(current_time() + "Unexpected message received.")
+        else:
+            print(str(time.time()-timeouttimestamp))
+            if(time.time()-timeouttimestamp >= 60):
+                state = "no_connection"
+
+            

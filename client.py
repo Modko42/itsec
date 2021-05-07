@@ -14,6 +14,7 @@ NET_PATH = './'
 OWN_ADDR = 'A'
 netint = network_interface(NET_PATH, OWN_ADDR)
 
+timeouttimestamp=time.time()-60
 state = 0
 
 def current_time():
@@ -58,7 +59,7 @@ def login():
     if status:
         if proto.deprotocolyze(msg).type == 5:
             netint.send_msg('B', proto.protocolyze(message_pw))
-    return True
+    return status
 
 def wait_for_msg():
     status = False
@@ -71,6 +72,7 @@ def wait_for_msg():
 
 
 def upload(filename):
+    global state
     with open(filename, 'r') as f:
         lines = f.readlines()
     lines_str = ""
@@ -83,15 +85,26 @@ def upload(filename):
         msg = proto.deprotocolyze(result)
         if msg.type == 5:
             return True
-        else:
-            return False
+    print(current_time()+"Timeout error")
+    timeouttimestamp=time.time()
+    state=0
+    return False
 
 
 def download(filename):
+    global state
     status, result = wait_for_msg()
     if not status:
+        print(current_time()+"Timeout error")
+        timeouttimestamp=time.time()
+        state=0
         return False
     msg = proto.deprotocolyze(result)
+    if(result.type == 8):
+        print(current_time()+"Timeout error")
+        timeouttimestamp=time.time()
+        state=0
+        return
     with open(filename, 'w+') as f:
         for line in list(msg.data.decode('utf-8')):
             f.write(line)
@@ -100,6 +113,7 @@ def download(filename):
 
 
 def command():
+    global state
     print("Type your command: ",end='')
     cmd = input()
     split = cmd.split()
@@ -110,12 +124,21 @@ def command():
         result = proto.deprotocolyze(msg)
         if status:
             if result.type != 5:
-                print(current_time()+"Error, no answer")
+                if(result.type == 8):
+                    print(current_time()+"Timeout error")
+                    timeouttimestamp=time.time()
+                    state=0
+                    return
+                print(current_time()+result.data.decode('utf-8'))
             else:
                 if upload(split[1]):
                     print(current_time()+"Upload successful")
                 else:
                     print(current_time()+"Upload failed")
+        else:
+            print(current_time()+"Timeout error")
+            timeouttimestamp=time.time()
+            state=0
 
     elif split[0] == "download":
         message_command = Message(data=bytes(cmd, 'utf-8'), type=6)
@@ -128,19 +151,36 @@ def command():
         message_command = Message(data=bytes(cmd, 'utf-8'), type=6)
         netint.send_msg('B', proto.protocolyze(message_command))
         status, result = wait_for_msg()
+        msg=proto.deprotocolyze(result)
         if status:
-            print(proto.deprotocolyze(result).data.decode("utf-8"))
+            if(msg.type == 8):
+                print(current_time()+"Timeout error")
+                print("ott")
+                timeouttimestamp=time.time()
+                print("state")
+                state=0
+                print("thing")
+                return
+            print(msg.data.decode("utf-8"))
         else:
             print(current_time()+"Timeout error")
-
+            print("itt")
+            timeouttimestamp=time.time()
+            state=0
 
 while True:
+    print(state)
     if state == 0:
-        if init_connection():
-            print(current_time()+"Connected successfully!")
-            state = 1
+        waittime=round(time.time()-timeouttimestamp)
+        print(waittime)
+        if(waittime >= 60):
+            if init_connection():
+                print(current_time()+"Connected successfully!")
+                state = 1
+            else:
+                print(current_time()+"Connection failed!")
         else:
-            print(current_time()+"Connection failed!")
+            print(str(waittime) +"seconds till you can attempt to login")
     elif state == 1:
         if login():
             print(current_time()+"Successful login!")
@@ -148,4 +188,8 @@ while True:
         else:
             print(current_time()+"Login failed, wrong id or password!")
     elif state == 2:
-        command()
+        try:
+            command()
+        except:
+            print("Error while communicating with the server, disconnecting")
+            state = 0
